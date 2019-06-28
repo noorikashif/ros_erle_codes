@@ -6,11 +6,9 @@
 #include <mavros_msgs/SetMode.h>
 #include <geometry_msgs/TwistStamped.h>
 #include <sensor_msgs/NavSatFix.h>
-//#include <geometry_msgs/Vector3Stamped.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf/transform_datatypes.h>
 #include <nav_msgs/Odometry.h>
-//#include <cmath>
 #define MAX_VEL 2
 #define BASE_VEL 0
 #define MIN_VEL -2
@@ -19,19 +17,21 @@ static constexpr double _180_OVER_PI = 180.0 / 3.14159;
 class PID
 {
   public:
+
     PID(double kp, double ki, double kd);
     ~PID()
     {
       _error_sum=0;
       _old_error=0;
     };
+    double _error;
     double update_PID(double set_point, double input,int mode);
-    //int clamp(double error, double output);
+   
   private:
     double _Kp;
     double _Ki;
     double _Kd;
-    double _error;
+    
     double _error_sum;
     double _error_diff;
     double _old_error;
@@ -234,7 +234,12 @@ geometry_msgs::TwistStamped msg_takeoff;
       ROS_INFO_STREAM("Throttle: "<<throttle);
       ROS_INFO_STREAM("Roll: "<<roll);
       ROS_INFO_STREAM("Pitch: "<<pitch);
-       vel_pub.publish(msg_takeoff);
+      if(((vel_x._error<0.05)&&(vel_x._error>(-0.05)))&&((vel_y._error<0.05)&&(vel_y._error>(-0.05))))
+      { 
+        ROS_WARN("!!!!!!!LANDED TRUE!!!!!!1");
+        
+      }
+      vel_pub.publish(msg_takeoff);
      }
      else
      {

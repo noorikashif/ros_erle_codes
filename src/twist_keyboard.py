@@ -6,9 +6,9 @@ import roslib; roslib.load_manifest('teleop_twist_keyboard')
 import rospy
 
 from geometry_msgs.msg import TwistStamped
-
+from mavros_msgs.msg import RCIn
 import sys, select, termios, tty
-
+kill_switch_value = 1500
 msg = """
 Reading from the keyboard  and Publishing to Twist!
 ---------------------------
@@ -59,6 +59,8 @@ speedBindings={
         'e':(1,1.1),
         'c':(1,.9),
     }
+def radio_callback(data):
+    kill_switch_value= data.channles[5]
 
 def getKey():
     tty.setraw(sys.stdin.fileno())
@@ -75,6 +77,8 @@ if __name__=="__main__":
     settings = termios.tcgetattr(sys.stdin)
 
     pub = rospy.Publisher('cmd_vel', TwistStamped, queue_size = 1)
+    rospy.Subscriber("/mavros/rc/in", RCIn ,radio_callback)
+    
     rospy.init_node('teleop_twist_keyboard_drone')
 
     speed = rospy.get_param("~speed", 0.5)
@@ -84,7 +88,7 @@ if __name__=="__main__":
     z = 0
     th = 0
     status = 0
-
+if (kill_switch_value>1500):
     try:
         print(msg)
         print(vels(speed,turn))
@@ -125,5 +129,8 @@ if __name__=="__main__":
         twist.linear.x = 0; twist.linear.y = 0; twist.linear.z = 0
         twist.angular.x = 0; twist.angular.y = 0; twist.angular.z = 0
         pub.publish(twist)
-
+else:
+    print("KIll switch Activated......")
+    print("Published data to zero...")
+    exit()
 termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
